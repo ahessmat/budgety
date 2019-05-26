@@ -68,13 +68,15 @@ var budgetController = (function(){
 
 var UIController = (function() {
     //some code
-    //Object for storing the HTML classes
+    //Object for storing the HTML classes found in index.html
     //Saves us from future edits
     var DOMstrings = {
         inputType: '.add__type',
         inputDescription: '.add__description',
         inputValue: '.add__value',
-        inputButton: '.add__btn'
+        inputButton: '.add__btn',
+        incomeContainer: '.income__list',
+        expensesContainer: '.expenses__list'
     }
     return {
         //Method for returning (3) user inputs from interface
@@ -85,6 +87,33 @@ var UIController = (function() {
                 value : document.querySelector(DOMstrings.inputValue).value
             };
     
+        },
+        
+        //Function for adding expenses/income to the UI
+        addListItem: function(obj, type){
+            var html, newHTML, element;
+            
+            //Create HTML string with placeholder text
+            //sets var html to a string that we pulled from index.html
+            //some alterations implemented for ease of replacing: %id%, %description%, and %value%
+            if (type === 'inc'){
+                element = DOMstrings.incomeContainer;
+                html = '<div class="item clearfix" id="income-%id%"> <div class="item__description">%description%</div> <div class="right clearfix"> <div class="item__value">%value%</div> <div class="item__delete"> <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button> </div> </div> </div>';
+                
+            } else if (type === 'exp'){
+                element = DOMstrings.expensesContainer;
+                html = '<div class="item clearfix" id="expense-%id%"> <div class="item__description">%description%</div> <div class="right clearfix"> <div class="item__value">%value%</div> <div class="item__percentage">21%</div> <div class="item__delete"> <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button> </div> </div> </div>'
+            }
+            
+            //Replace the placeholder text with data
+            // Searches the html string for a substring, replaces it with values pulled from corresponding object in data structure
+            newHTML = html.replace('%id%', obj.id);
+            newHTML = newHTML.replace('%description%', obj.description);
+            newHTML = newHTML.replace('%value%', obj.value);
+            
+            
+            //Insert the HTML into the DOM
+            document.querySelector(element).insertAdjacentHTML('beforeend', newHTML);
         },
         
         //Get method for other modules to access DOMstrings
@@ -130,6 +159,7 @@ var controller = (function(budgetCtrl, UICtrl){
         var newItem = budgetCtrl.addItem(input.type, input.description, input.value);
         
         //Add the item to the UI
+        UICtrl.addListItem(newItem, input.type);
         
         //Calculate the budget
         
