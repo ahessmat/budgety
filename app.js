@@ -102,7 +102,7 @@ var UIController = (function() {
                 
             } else if (type === 'exp'){
                 element = DOMstrings.expensesContainer;
-                html = '<div class="item clearfix" id="expense-%id%"> <div class="item__description">%description%</div> <div class="right clearfix"> <div class="item__value">%value%</div> <div class="item__percentage">21%</div> <div class="item__delete"> <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button> </div> </div> </div>'
+                html = '<div class="item clearfix" id="expense-%id%"> <div class="item__description">%description%</div> <div class="right clearfix"> <div class="item__value">%value%</div> <div class="item__percentage">21%</div> <div class="item__delete"> <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button> </div> </div> </div>';
             }
             
             //Replace the placeholder text with data
@@ -114,6 +114,28 @@ var UIController = (function() {
             
             //Insert the HTML into the DOM
             document.querySelector(element).insertAdjacentHTML('beforeend', newHTML);
+        },
+        
+        //Function for clearing the "Add description" and "Value" fields after inputting a value
+        clearFields: function(){
+            var fields;
+            
+            //Pulls a nodelist
+            fields = document.querySelectorAll(DOMstrings.inputDescription + ', ' + DOMstrings.inputValue);
+            console.log(fields);
+            
+            //uses a list function (stored in the prototype of arrays) named slice to convert the list-type fields to an array?
+            var fieldsArr = Array.prototype.slice.call(fields);
+            console.log(fieldsArr);
+            
+            //clears the Array (leaving fields blank)
+            //alternative to using a for-loop
+            fieldsArr.forEach(function(current, index, array){
+                current.value = "";
+            });
+            
+            //Returns the text cursor to the "Add Description Box"
+            fieldsArr[0].focus();
         },
         
         //Get method for other modules to access DOMstrings
@@ -160,6 +182,9 @@ var controller = (function(budgetCtrl, UICtrl){
         
         //Add the item to the UI
         UICtrl.addListItem(newItem, input.type);
+        
+        //Clears the fields
+        UICtrl.clearFields();
         
         //Calculate the budget
         
