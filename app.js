@@ -115,8 +115,14 @@ var UIController = (function() {
         inputValue: '.add__value',
         inputButton: '.add__btn',
         incomeContainer: '.income__list',
-        expensesContainer: '.expenses__list'
-    }
+        expensesContainer: '.expenses__list',
+        budgetLabel: '.budget__value',
+        incomeLabel: '.budget__income--value',
+        expensesLabel: '.budget__expenses--value',
+        percentageLabel: '.budget__expenses--percentage',
+        container: '.container'
+    };
+    
     return {
         //Method for returning (3) user inputs from interface
         getInput: function() {
@@ -137,11 +143,11 @@ var UIController = (function() {
             //some alterations implemented for ease of replacing: %id%, %description%, and %value%
             if (type === 'inc'){
                 element = DOMstrings.incomeContainer;
-                html = '<div class="item clearfix" id="income-%id%"> <div class="item__description">%description%</div> <div class="right clearfix"> <div class="item__value">%value%</div> <div class="item__delete"> <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button> </div> </div> </div>';
+                html = '<div class="item clearfix" id="inc-%id%"> <div class="item__description">%description%</div> <div class="right clearfix"> <div class="item__value">%value%</div> <div class="item__delete"> <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button> </div> </div> </div>';
                 
             } else if (type === 'exp'){
                 element = DOMstrings.expensesContainer;
-                html = '<div class="item clearfix" id="expense-%id%"> <div class="item__description">%description%</div> <div class="right clearfix"> <div class="item__value">%value%</div> <div class="item__percentage">21%</div> <div class="item__delete"> <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button> </div> </div> </div>';
+                html = '<div class="item clearfix" id="exp-%id%"> <div class="item__description">%description%</div> <div class="right clearfix"> <div class="item__value">%value%</div> <div class="item__percentage">21%</div> <div class="item__delete"> <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button> </div> </div> </div>';
             }
             
             //Replace the placeholder text with data
@@ -177,6 +183,19 @@ var UIController = (function() {
             fieldsArr[0].focus();
         },
         
+        displayBudget: function(obj) {
+            document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
+            document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
+            document.querySelector(DOMstrings.expensesLabel).textContent = obj.totalExp;
+            
+            
+            if (obj.percentage > 0){
+                document.querySelector(DOMstrings.percentageLabel).textContent = obj.percentage + '%';
+            } else {
+                document.querySelector(DOMstrings.percentageLabel).textContent = '---';
+            }
+        },
+        
         //Get method for other modules to access DOMstrings
         getDOMstrings: function () {
             return DOMstrings;
@@ -207,6 +226,14 @@ var controller = (function(budgetCtrl, UICtrl){
 
         });
         
+        
+        //Using event delegation, we setup a listener for deletion clicks
+        //We needed event delegation because the elements in the HTML code do not exist yet
+        //The elements populate after the user inputs entries
+        //This also saves us from having to add event listeners to each element as they are made
+        //invokes the function ctrlDeleteItem
+        document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem);
+        
     };
     
     var updateBudget = function(){
@@ -217,7 +244,7 @@ var controller = (function(budgetCtrl, UICtrl){
         var budget = budgetCtrl.getBudget();
         
         //Display the budget
-        console.log(budget);
+        UICtrl.displayBudget(budget);
     }
     
     var ctrlAddItem = function() {
@@ -241,14 +268,45 @@ var controller = (function(budgetCtrl, UICtrl){
             updateBudget();
 
             //Display the budget on the UI 
+            
         }
         
    
     };
     
+    var ctrlDeleteItem = function(event){
+        var itemID, splitID, type, ID;
+        //Uses DOM traversal to find the ID of the elements listed
+        //i.e. the object ID is stored in an elevated tier from where the button is nested
+        //Stored 4 tiers up, hence invoking parentNode so many times
+        //ID will return as 'inc-#' or 'exp-#'
+        itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
+        
+        //if the ID exists (evaluates to 'true')...
+        if (itemID) {
+            //make an array from the string, storing inc/exp into [0] and the ID-value into [1]
+            splitID = itemID.split('-');
+            type = splitID[0];
+            ID = splitID[1];
+            
+            //delete item from data structure
+            
+            //delete item from the UI
+            
+            //Update and show the new budget
+        };
+    };
+    
     return {
         init: function() {
             console.log('Application has started');
+            //Initializes the app with all values onscreen set to default values
+            UICtrl.displayBudget({
+                budget: 0,
+                totalInc: 0,
+                totalExp: 0,
+                percentage: -1
+            });
             setupEventListeners();
         }
     }
