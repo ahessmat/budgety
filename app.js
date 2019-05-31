@@ -69,6 +69,30 @@ var budgetController = (function(){
             return newItem;
         },
         
+        //removes the inc/exp object from the data structure
+        //must be passed type (either inc/exp) and the id that you want removed
+        deleteItem: function(type, id){
+            var ids, index;
+            
+            //invokes the array of either inc/exp objects with data.allItems[type]
+            //map iterates over an array and alters it, returning ids instead of objects
+            ids = data.allItems[type].map(function(current){
+                //objects have 3 values: .id, .description, .value
+                //we want an array of IDs
+                return current.id;
+            });
+            
+            //Having returned an array of IDs, we want the index position of the ID
+            //indexOf() returns -1 if the id is not found
+            index = ids.indexOf(id);
+            
+            //Delete the type-object at index only if it was found
+            //splice(start, how_many)
+            if (index !== -1) {
+                data.allItems[type].splice(index, 1);
+            }
+        },
+        
         calculateBudget: function(){
             //calculate total income and expenses
             calculateTotal('exp');
@@ -287,9 +311,10 @@ var controller = (function(budgetCtrl, UICtrl){
             //make an array from the string, storing inc/exp into [0] and the ID-value into [1]
             splitID = itemID.split('-');
             type = splitID[0];
-            ID = splitID[1];
+            ID = parseInt(splitID[1]);
             
             //delete item from data structure
+            budgetCtrl.deleteItem(type, ID);
             
             //delete item from the UI
             
