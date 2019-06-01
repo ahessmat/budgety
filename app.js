@@ -5,7 +5,23 @@ var budgetController = (function(){
         this.id = id;
         this.description = description;
         this.value = value;
+        this.percentage = -1; //default percentage of the budget used
     };
+    
+    //Provide a prototype callback method for all expense objects to determine their percentage of the budget
+    Expense.prototype.calcPercentage = function(totalIncome){
+        if (totalIncome > 0){
+            this.percentage = Math.round((this.value / totalIncome) * 100);
+        } else {
+            this.percentage = -1;
+        }
+        
+    };
+    
+    //Prototype callback method for accessing the expense object's percentage
+    Expense.prototype.getPercentage = function() {
+        return this.percentage;
+    }
     
     //Constructor function for income objects
     var Income = function(id, description, value){
@@ -44,6 +60,7 @@ var budgetController = (function(){
         percentage: -1 //default to -1 instead of 0, since 0 is interpreted as 'falsy'
     };
     
+    //Returns an object so that the controller can access the capabilities within the budgetController module
     return {
         addItem: function(type, des, val) {
             var newItem;
@@ -110,6 +127,23 @@ var budgetController = (function(){
             }
         },
         
+        //invokes the expense-object prototype method calculatePercentage on each item in the exp array
+        //This updates all the percentages that each object takes of the overall budget
+        calculatePercentages: function() {
+            data.allItems.exp.forEach(function(current){
+                current.calcPercentage(data.totals.inc);
+            });
+        },
+        
+        //invokes the expense-object prototype method getPercentage on each item in the exp array
+        //returns an array filled with all of the percentage values using the .map() method
+        getPercentages: function() {
+            var allPerc = data.allItems.exp.map(function(current){
+                return current.getPercentage();
+            });
+            return allPerc;
+        },
+        
         getBudget: function() {
             return {
                 budget: data.budget,
@@ -144,7 +178,8 @@ var UIController = (function() {
         incomeLabel: '.budget__income--value',
         expensesLabel: '.budget__expenses--value',
         percentageLabel: '.budget__expenses--percentage',
-        container: '.container'
+        container: '.container',
+        expensesPercLabel: '.item__percentage'
     };
     
     return {
@@ -185,6 +220,17 @@ var UIController = (function() {
             document.querySelector(element).insertAdjacentHTML('beforeend', newHTML);
         },
         
+        //To delete from the UI, we need to select the appropriate ID under class "income__list"/"expense__list"
+        //Will be passed itemID var from controller.ctrlDeleteItem()
+        deleteListItem: function(selectorID) {
+            //Define the ID to be deleted
+            var el = document.getElementById(selectorID);
+            //Since it is a child, go up to its appropriate parent tier and then remove it
+            el.parentNode.removeChild(el);
+            //Note that the above 2 lines could be written as follows:
+            //document.getElementById(selectorID).parentNode.removeChild(document.getElementById(selectorID));
+        },
+        
         //Function for clearing the "Add description" and "Value" fields after inputting a value
         clearFields: function(){
             var fields;
@@ -218,6 +264,33 @@ var UIController = (function() {
             } else {
                 document.querySelector(DOMstrings.percentageLabel).textContent = '---';
             }
+        },
+        
+        displayPercentages: function(percentages){
+            //Don't know how many exp items will be on the list, so we use .querySelectorAll()
+            //var fields is a nodeList, since in the DOM tree all elements are nodes
+            var fields = document.querySelectorAll(DOMstrings.expensesPercLabel);
+            
+            //Instead of converting a nodeList to an array via .slice(), let's just alter the HTML directly
+            //Leverages callback functions
+            //nodeListForEach is going to be an anonymous function that takes in a nodeList and a method for arguments
+            var nodeListForEach = function(list, callback){
+                for (var i = 0; i < list.length; i++){
+                    //for each item in the list, call the method and pass the current element in the nodeList and its index
+                    callback(list[i], i);
+                }
+            };
+            
+            //Execute nodeListForEach on var fields with the following callback function
+            nodeListForEach(fields, function(current, index){
+                //If the value in the percentages array at the given index is greater than 0...
+                if (percentages[index] > 0) {
+                    //alter the current node value to the percentage stored in the percentages[index] array
+                    current.textContent = percentages[index] + '%';
+                } else {
+                    current.textContent = '---';
+                }
+            });
         },
         
         //Get method for other modules to access DOMstrings
@@ -269,7 +342,16 @@ var controller = (function(budgetCtrl, UICtrl){
         
         //Display the budget
         UICtrl.displayBudget(budget);
-    }
+    };
+    
+    var updatePercentages = function() {
+        //calculate percentages
+        budgetCtrl.calculatePercentages();
+        //read percentages from the budget controller
+        var percentages = budgetCtrl.getPercentages();
+        //update the UI with the new percentages
+        UICtrl.displayPercentages(percentages);
+    };
     
     var ctrlAddItem = function() {
         var input, newItem;
@@ -291,7 +373,8 @@ var controller = (function(budgetCtrl, UICtrl){
             //Calculate and update the budget
             updateBudget();
 
-            //Display the budget on the UI 
+            //Display the budget on the UI
+            updatePercentages();
             
         }
         
@@ -317,8 +400,13 @@ var controller = (function(budgetCtrl, UICtrl){
             budgetCtrl.deleteItem(type, ID);
             
             //delete item from the UI
+            UICtrl.deleteListItem(itemID);
             
             //Update and show the new budget
+            updateBudget();
+            
+            //Update and shoe the new percentages
+            updatePercentages();
         };
     };
     
