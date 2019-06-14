@@ -209,6 +209,16 @@ var UIController = (function() {
             
         };
     
+    //Instead of converting a nodeList to an array via .slice(), let's just alter the HTML directly
+    //Leverages callback functions
+    //nodeListForEach is going to be an anonymous function that takes in a nodeList and a method for arguments
+    var nodeListForEach = function(list, callback){
+        for (var i = 0; i < list.length; i++){
+            //for each item in the list, call the method and pass the current element in the nodeList and its index
+            callback(list[i], i);
+        }
+    };
+    
     return {
         //Method for returning (3) user inputs from interface
         getInput: function() {
@@ -301,15 +311,6 @@ var UIController = (function() {
             //var fields is a nodeList, since in the DOM tree all elements are nodes
             var fields = document.querySelectorAll(DOMstrings.expensesPercLabel);
             
-            //Instead of converting a nodeList to an array via .slice(), let's just alter the HTML directly
-            //Leverages callback functions
-            //nodeListForEach is going to be an anonymous function that takes in a nodeList and a method for arguments
-            var nodeListForEach = function(list, callback){
-                for (var i = 0; i < list.length; i++){
-                    //for each item in the list, call the method and pass the current element in the nodeList and its index
-                    callback(list[i], i);
-                }
-            };
             
             //Execute nodeListForEach on var fields with the following callback function
             nodeListForEach(fields, function(current, index){
@@ -334,6 +335,23 @@ var UIController = (function() {
             year = now.getFullYear(); //Returns YYYY
             
             document.querySelector(DOMstrings.dateLabel).textContent = months[month] + ' ' + year;
+        },
+        
+        changedType: function(){
+            
+            var fields = document.querySelectorAll(
+            
+                DOMstrings.inputType + ',' +
+                DOMstrings.inputDescription + ',' +
+                DOMstrings.inputValue
+            
+            );
+            
+            nodeListForEach(fields, function(cur) {
+                cur.classList.toggle('red-focus');
+            });
+            
+            document.querySelector(DOMstrings.inputButton).classList.toggle('red');
         },
         
         //Get method for other modules to access DOMstrings
@@ -373,6 +391,8 @@ var controller = (function(budgetCtrl, UICtrl){
         //This also saves us from having to add event listeners to each element as they are made
         //invokes the function ctrlDeleteItem
         document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem);
+        
+        document.querySelector(DOM.inputType).addEventListener('change', UICtrl.changedType);
         
     };
     
